@@ -1,0 +1,112 @@
+// This is your Prisma schema file.
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tickets   Ticket[]
+  articles  Article[]
+  comments  Comment[]
+
+  @@map("users")
+}
+
+model Ticket {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  status      TicketStatus @default(OPEN)
+  priority    Priority     @default(MEDIUM)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  comments  Comment[]
+  attachments Attachment[]
+
+  @@map("tickets")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id])
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@map("comments")
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  category    String
+  tags        String
+  published   Boolean  @default(false)
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  @@map("articles")
+}
+
+model Attachment {
+  id       String @id @default(cuid())
+  filename String
+  filepath String
+  mimetype String
+  size     Int
+  createdAt DateTime @default(now())
+
+  // Relations
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id])
+
+  @@map("attachments")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
